@@ -1,0 +1,360 @@
+Redux Introduction
+________________________________________________
+Goals
+1. Describe what redux is and how it can be useful
+2. Define key redux terminology
+-store
+-reducer
+-action
+-dispatch
+3. Define a pure function and see examples of pure and impure functions 
+4. include redux in an application
+
+we will write a general javascript application with redux (no react)
+
+it is a library that helps us manage state 
+the main goal is to help centralize state , but state is just a general concept 
+
+it is very useful on larger applications 
+
+for larger apps , managing state can be a bit tricky 
+helps us solve the issue of prop drilling 
+
+commonly used with react but does not need to be 
+
+Redux helps us create a central state store 
+
+passing down props over and over is challenging 
+passinf data back up over and over is challenging 
+
+it is common in large apps to have shared state 
+
+________________________________________________
+createStore
+________________________________________________
+how it works 
+lets make a store
+we can download it with npm but we are going to just use the cdn for now 
+
+
+<script src="https://unpkg.com/redux"></script>
+
+first we want to create a place to put our stores 
+
+we have access to Redux.createStore()when it reads it off the cdm 
+
+expected the reducer to be a function error pops up 
+
+we cannot create a store without specifying how to define the initial state 
+
+what changes and how to make changes to make to the state 
+
+we have to pass a function to the store and that is going to be our reducer 
+
+________________________________________________
+Reducer Basics
+________________________________________________
+Reducers are functions (all of the concepts sound fancy but they are just labels that have been given to some common stuff in JS)
+
+They accept two objects: a state and an action 
+
+They use the action to produce and return a new state object 
+
+There are lots of rules about how we update state 
+
+They should be pure functions , ie they should not mutate their inputs
+
+we can write our first reducer like this 
+
+it is important that we define an initial state
+
+we can get out the state by access store.getState()
+
+________________________________________________
+Pure functions
+________________________________________________
+
+Before we can get to writing our reducers we need to talk about pure functions 
+
+Reducers must be pure functions 
+they should not mutate the state
+you wont see the difference now but things wont work when we add React 
+
+Methods that mutate 
+push/pop 
+shift/unshift
+splice
+modifying keys in an object arry 
+
+things tht dont mutate 
+-map
+-filter
+-spread/Object.assign 
+-concat/slice 
+
+something we should never do is performing side effects/api calls/routing transiutions
+anything async can be problematic 
+
+it is called a reducer because the callback function you pass in to an array.reduce is called a reducer 
+
+const reducer= (accumulator,currentValue)
+
+just a quick review 
+
+
+function addToArrImpure(arr,val){
+    arr.push(val);
+    return arr;
+}
+
+function addToArrPure(arr,val){
+    return [...arr,val]
+}
+
+these are two functions we can use to make similar thing except that addToArrPure is not changing the original array so we dont have to worry about mutations and we get back a brand new array with the data that we want 
+
+another example , adding to an object 
+
+function addToObjImpure(obj,key,val){
+    obj[key] = val;
+    return obj;
+}
+function addToObjPure(obj,key,val){
+    return {...obj,[key]:val }
+}
+
+we can use an object with spread and a computed property like demonstrated above 
+
+
+addToObjImpure(obj,'count',45)
+{color: "red", count: 45}
+
+another example 
+
+function doubleImpure(nums){
+    nums.forEach((num,i) => nums[i] *2);
+    return nums;
+}
+function doublePure(nums){
+    nums.map(n => n*2);
+}
+
+
+
+may need to do some research about the pure way to do something 
+
+most of the time you get by with the array methods 
+
+we always want to make sure our reducers are pure 
+
+________________________________________________
+Actions and dispatch
+________________________________________________
+
+the second argument our reducer needs to accept is the action 
+
+reducers are not called directly 
+we will pass the reduce to createStore() 
+
+instead we are going to fire off an action 
+which is intercepted and processed by a reducer 
+
+how should it return a new version of state 
+
+Reduc actions are simple instructions that trell reducers how to adjust state 
+
+They are objects and contain a type key
+type is by convention a string in UPPER_SNAKE_CASE 
+
+The way we 'fire off an action' is by running th dispatch function on the store 
+
+dispatch takes an action and it is going to execute that reducer function with that action and with the current state in the store 
+
+store.dispatch({type:"LOG_STATE"});
+
+Modifying our reducer 
+
+now we can define logion based on the action.type 
+
+if we get an action that has type LOG STATE we can log the state and then return the state 
+
+we update our function and it looks liek this 
+
+const INITIAL_STATE = {count:0};
+
+const countReducer = (state=INITIAL_STATE,action) =>{
+    if(action.type === 'LOG_STATE'){
+        console.log("HERE IS YOUR STATE:",state)
+        return state;
+    }
+    // if action not matched 
+    return state;
+}
+
+const store = Redux.createStore(countReducer);
+
+
+
+so everytime we want to update our state 
+
+we can use store.dispatch({type:"LOG_STATE"});
+
+
+store.dispatch({type:"LOG_STATE"});
+reduxSetup.js:5 HERE IS YOUR STATE: {count: 0}
+{type: "LOG_STATE"}
+
+
+we get that back and if we use one that is unrecognized like below:
+
+we can use store.dispatch({type:"DELETE_TODO"});
+
+we still get back a return value 
+{type: "DELETE_TODO"}
+
+when we call dispatch the return value is going to be considered the next state 
+
+a few common errors 
+
+if we dont pass in an action 
+
+it will complain because it is expecting an object 
+
+and another is if we pass in an object with the key 'type' and that needs to be there 
+
+objects must have a type but they can also have additional keys 
+
+store.dispatch({
+    type:"Some_ACTION",
+    payload:"some_value"
+}
+)
+
+you can access this in the reducer using action.payload 
+
+________________________________________________
+Writing CounterReducer
+________________________________________________
+
+Building a counter with redux 
+
+so inside of our reducer we will want to look for an increment and decerement action type
+
+it is normal to use switch statements inside of these things 
+they are really common on redux when we write reducers 
+
+we end up with something like this 
+
+switch(action.type){
+        case 'INCREMENT':
+            return {...state, count:state.count +1}
+    }
+
+where we are not mutating the state but rather we are adding in an additional value and we can do the same for decerement
+
+    switch(action.type){
+        case 'INCREMENT':
+            return {...state, count:state.count +1}
+        case 'DECREMENT':
+            return {...state, count:state.count -1}
+        case 'RESET':
+            return{...state,count:0}
+        default:
+            return state
+    }
+
+we end up with something like this and we also add in a default value 
+
+but we are still missing a piece. How do we get the current_state?
+if we dont actually call the reducer we dont actually get the return value 
+
+
+in our console 
+
+store.dispatch({type:"INCREMENT"})
+{type: "INCREMENT"}type: "INCREMENT"__proto__: Object
+store.getState()
+{count: 1}
+
+
+store.getState()
+{count: 0}
+store.dispatch({type:"INCREMENT"})
+{type: "INCREMENT"}
+store.dispatch({type:"INCREMENT"})
+{type: "INCREMENT"}
+store.dispatch({type:"INCREMENT"})
+{type: "INCREMENT"}
+store.getState()
+{count: 3}
+store.dispatch({type:"RESET"})
+{type: "RESET"}
+store.getState()
+{count: 0}
+
+
+so we dont directly manipulate the state we just dispatch actions 
+
+
+________________________________________________
+Building the counter
+________________________________________________
+
+now we are going to take that reducer we just built and we are going to create a little counter 
+
+const h1 = document.querySelector('h1');
+const incButton = document.querySelector('#increment');
+const decButton = document.querySelector('#decrement');
+
+incButton.addEventListener('click',function(e){
+    console.log('click')
+})
+
+this is what our basic script looks like and now we want to see about our basic click functionality 
+
+when we click on the buttons we want to do something with the  state 
+we are going to dispatch an action and wee are going to dispatch that action with a type of increment 
+
+
+const h1 = document.querySelector('h1');
+const incButton = document.querySelector('#increment');
+const decButton = document.querySelector('#decrement');
+
+incButton.addEventListener('click',function(e){
+    store.dispatch({type:"INCREMENT"});
+    const state = store.getState();
+    h1.innerText = state.count
+})
+decButton.addEventListener('click',function(e){
+    store.dispatch({type:"DECREMENT"});
+    const state = store.getState();
+    h1.innerText = state.count
+})
+
+
+and we have this basic pattern, we dispatch something and then we decrement and increment 
+
+we also have a reset so we can add another button to reset
+
+always better to use the state from the store than to reset to default values so we wouldnt set h1.innerText  to 0 because we wouldnt see if there was an error 
+
+for extra practice we are going to add in a multiply feature that lets us make use of a payload(although we could call it whatever we want)
+
+this pattern and the ground work that we lay here is important 
+
+it can be a very confusing intro to redux in a larger app 
+
+store
+reducer
+action
+dispatch
+
+we have to understand these 
+
+we create a store by passing in a reducer , that reducer is a function that accepts state , an action is an object that contains a type , that action is dispatched and that modifies our state and the store clings on to the new state 
+
+you call store.dispatch(action)
+store calls the reducer
+root reducer may cominbe putput of multiple recuers into a single state tree
+store saves the complete state tree that was returned 
+
