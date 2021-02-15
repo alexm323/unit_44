@@ -1,0 +1,202 @@
+first thing we need to do is install react-redux and redux 
+
+then we get access to our Provider component from react-redux and now we can wrap our app component in the index.js inside of it 
+
+we want to make our reducer so we can create our store 
+
+we need to have an initial state which is an empty array of memes that we will be adding to and then we have a couple of actions to add meme and remove memes 
+
+
+import {Provider} from 'react-redux';
+import rootReducer from './rootReducer';
+import {createStore} from 'redux';
+
+const store = createStore(rootReducer);
+
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+
+
+const INITIAL_STATE = {[]};
+
+function rootReducer (state=INITIAL_STATE,action) {
+    switch (action.type){
+        case "ADD_MEME":
+            return {...state, memes:[...state.memes,{action.meme}]}
+        case "REMOVE_MEME":
+            return {
+                ...state,
+                memes: state.memes.filter(meme => meme.id !== action.id)
+              };
+        default:
+            return state;
+    };
+    
+}
+
+export default rootReducer;
+
+
+we can add in a couple of different components , one for a form and the other for the meme so we can pass in our prop info 
+
+lets start with the meme component which should accept topText,bottomText,img_url, and an id 
+
+we can add in uuid so that we can avoid the key prop error 
+
+lets work on the meme component 
+
+import React from 'react';
+
+const Meme = ({topText,bottomText,imgUrl,id, deleteMeme}) => {
+    const handleDelete = () => {
+        deleteMeme(id)
+    }
+    return(
+        <div style={{width:"200px"}} className="meme-container">
+            <span className="top-text">{topText}</span>
+            <img src={imgUrl} alt="custom meme"/>
+            <span className="bottom-text">{bottomText}</span>
+            <button onClick={handleDelete}>Delete Meme</button>
+        </div>
+    )
+}
+
+export default Meme;
+
+so we have just very basic styles to control the meme size for whatever image gets used 
+
+now we can update our app.js to use our redux hooks 
+
+import { useDispatch, useSelector } from 'react-redux';
+import './App.css';
+import Meme from './Meme';
+
+function App() {
+  const memes = useSelector(state => state.memes);
+  const dispatch = useDispatch();
+
+  const addMeme = (memeData) => {
+    dispatch({type:"ADD_MEME", meme:memeData})
+  }
+  const deleteMeme = (memeId) => {
+    dispatch({type:"REMOVE_MEME", id:memeId})
+  }
+  return (
+    <div className="App">
+      <header className="App-header">
+        <Meme topText ="React redux is so fun" bottomText="I cant think of a meme" imgUrl="https://upload.wikimedia.org/wikipedia/en/2/2b/Bad_Luck_Brian.jpg" deleteMeme={deleteMeme}/>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+we need to add in our form so we can add to our memes
+
+
+import React, {useState} from 'react';
+import {uuidv4 as uuid} from 'uuid/v4';
+
+const INITIAL_FORM_STATE = {
+    topText:"",
+    bottomText:"",
+    imgUrl:""
+};
+
+const MemeForm = ({addMeme}) => {
+    const [form,setForm] = useState(INITIAL_FORM_STATE);
+
+    function handleSubmit(e){
+        e.preventDefault();
+        addMeme({...form,id:uuid()});
+        setForm(INITIAL_FORM_STATE);
+    }
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setForm(formData => ({ ...formData, [name]: value }));
+    }
+    
+    return (
+        <div>
+            <h1>Meme-o-matic Redux</h1>
+            <form onSubmit={handleSubmit}>
+                <label htmlFor="imgUrl">Image URL</label>
+                <input 
+                name="imgUrl" 
+                type="text" 
+                onChange={handleChange}
+                id="imgUrl"
+                value={form.imgUrl}
+                />
+                <label htmlFor="topText">Top Text</label>
+                <input 
+                name="topText" 
+                type="text" 
+                onChange={handleChange}
+                id="topText"
+                value={form.topText}
+                />
+                <label htmlFor="bottomText">Bottom Text</label>
+                <input 
+                name="topText" 
+                type="text" 
+                onChange={handleChange}
+                id="bottomText"
+                value={form.bottomText}
+                />
+                <button>Make a meme</button>
+            </form>
+        </div>
+    )
+    
+}
+
+export default MemeForm;
+
+standard form stuff where we have our state and pass down the add meme functionality from the upper component 
+
+now we update our app js and we have our working meme form app 
+
+not pretty but it works 
+
+import { useDispatch, useSelector } from 'react-redux';
+import './App.css';
+import Meme from './Meme';
+import MemeForm from './MemeForm';
+
+function App() {
+  const memes = useSelector(state => state.memes);
+  const dispatch = useDispatch();
+
+  const addMeme = (memeData) => {
+    dispatch({type:"ADD_MEME", meme:memeData})
+  }
+  const deleteMeme = (memeId) => {
+    dispatch({type:"REMOVE_MEME", id:memeId})
+  }
+
+  const memeArsenal = memes.map(meme => (
+    <Meme key={meme.id} topText = {meme.topText} bottomText={meme.bottomText} imgUrl = {meme.imgUrl} deleteMeme={ () => deleteMeme(meme.id)}/>
+  ))
+  return (
+    <div className="App">
+      <header className="App-header">
+        {/* <Meme topText ="React redux is so fun" bottomText="I cant think of a meme" imgUrl="https://upload.wikimedia.org/wikipedia/en/2/2b/Bad_Luck_Brian.jpg" deleteMeme={deleteMeme}/> */}
+      <MemeForm addMeme={addMeme}/>
+      {memeArsenal}
+      </header>
+    </div>
+  );
+}
+
+export default App;
+
+
