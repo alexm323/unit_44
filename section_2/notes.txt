@@ -1,0 +1,277 @@
+Goals
+Combine a Redux store with a React app
+Pass state from the store to a component with useSelector
+Dispatch actions to the store with useDispatch
+
+_____________________________________________________   
+Intro to react Redux
+_____________________________________________________
+
+How do we integrate them? how do we get the state? how do we dispatch actions to that store?
+
+useSelector and useDispatch hooks 
+
+there are specific libraries to use for several tools but we want 
+npm install react-Redux
+
+
+we are going to use the library
+
+allows us to connect a store to a react app 
+
+we need to wrap our app in the top-level component in react 
+
+we will need  reducers
+
+we get a provideer from redux 
+the provider accepts a prop of Redux store 
+
+we will need to wrap our top level App component in provider 
+
+we will call provider and wrap it in our index.js because that way it will wrap around every single thing and we wont have to clutter our app.js file 
+
+import {Provider} from "react-redux"
+
+but we also need to install redux actually the react-redux library is usually there too help us connect everything 
+
+so we need to import redux as well into our index.js file from our cra 
+
+but into our provider we need to pass in our reducer so we can create our store and we dont have that yet so lets make one 
+
+we make our root reducer file 
+
+const INITIAL_STATE = {count:0}
+
+function rootReducer(state=INITIAL_STATE,action){
+    switch (action.type){
+        case "INCREMENT":
+            return {...state, count: state.count + 1}
+        case "DECREMENT":
+            return {...state, count: state.count - 1}
+        default:
+            return state
+    }
+}
+
+export default rootReducer;
+
+and then  we import that into our index.js
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+import {Provider} from 'react-redux';
+import rootReducer from './rootReducer'
+import {createStore} from 'redux';
+
+const store = createStore(rootReducer)
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={store}>
+    <App />
+    </Provider>
+    
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+this is what our index.js looks like after that stuff 
+
+so we make our store pass it in as a prop to provider
+
+so now we have access to the store and the methods but we will be using hooks to interact with and change the state 
+
+_____________________________________________________
+useSelector hook
+_____________________________________________________
+
+we will need to make a new component and in that component we will want access to the data in the store 
+
+with this simple example it is how to connect our component to our store 
+
+we can access valyes from the store with the useSelector hook 
+which we can use in any functional components 
+
+using redux with hooks is so much easier than using redux with class based components 
+
+we are going to start with useSelector , allows us to extract data from the Redux store state 
+
+need to select what we want from the store 
+
+useSelector accepts a callback 
+the callback has access to the whole store in its first argument 
+
+and we specify what we want back 
+
+we can return an object or array or whatever is in our store 
+so we store it in a variable and we have access to it 
+
+import React from 'react';
+import {useSelector} from 'react-redux';
+
+
+const FirstCounter = () => {
+    const count = useSelector(store => store.count)
+
+    return (
+        <div>
+            <h1>Count is: {count}</h1>
+        </div>
+    )
+}
+
+export default FirstCounter;
+
+const count = useSelector(store => store.color)
+this is how we access our state values 
+
+so anything in that store can be accessed through the useSelector hook 
+
+if we try to access something that doesnt exist , we dont get something returned , its actually just undefined 
+
+there is no state in the component though 
+
+it is not a piece of state that is specific to our counter component 
+
+we dont need to store any of the crucial application data inside of our state 
+
+functional components ONLY 
+
+the way that we make updates in the state is using useDispatch hook 
+
+_____________________________________________________
+useDispatch
+_____________________________________________________
+
+so we use the useSelector hook to grab data from our store 
+
+dispatching to the store we can use useDispatch
+
+very simple and we just use it like
+
+const dispatch = useDispatch()
+
+it finds the correct dispatch function for us to that store 
+
+save the variable which is a function and then pass in an action 
+
+we will use these two hooks all the time with redux and hooks at least 
+
+now we can dispatch actions if we first use useDispatch()
+
+import React from 'react';
+import {useSelector, useDispatch} from 'react-redux';
+
+
+const SecondCounter = () => {
+    const dispatch = useDispatch()
+    const count = useSelector(store => store.count)
+
+    return (
+        <div>
+            <h1>Count is: {count}</h1>
+        </div>
+    )
+}
+
+export default SecondCounter;
+
+so lets set up a dispatch to go off when we click a couple of buttons 
+
+import React from 'react';
+import {useSelector, useDispatch} from 'react-redux';
+
+
+const SecondCounter = () => {
+    const dispatch = useDispatch()
+    const count = useSelector(store => store.count)
+    const increment = () => dispatch({type:"INCREMENT"})
+    const decrement = () => dispatch({type:"DECREMENT"})
+
+    return (
+        <div>
+            <h1>Count is: {count}</h1>
+            <button onClick={decrement}> - </button>
+            <button onClick={increment}> + </button>
+        </div>
+    )
+}
+
+export default SecondCounter;
+
+and we arent using state in our components and yet we can still change the state
+
+we are dispatching the increment action and it works for both of the components 
+
+both components that are accessing store.count are being updated whenever it changes 
+
+we are now dispatching actions from our components and grabbing data from our store 
+
+this pattern is basically what we will see from here on out using redux 
+
+breaking down reducers and how to consolidate them so theyh are not just one giant reducer 
+
+this is the core of using redux with hooks 
+
+if it is class based we have to use Connect() and map all the stuff
+
+the flow of how it all works is next 
+
+_____________________________________________________
+React redux data flow
+_____________________________________________________
+
+When our app is first rendered , it is inside the provider component 
+Store is created and that dispatches an initial action (this is the reason that we need to have a default, because we need to return that initial state as the first action)
+
+if we are not using a switch component then we are going to need to return state 
+
+Reducers returns the intial state 
+
+useSelector runs for all components connect to the store 
+-provides the data for these components 
+-triggers render 
+
+on ddispatch any connected components that receive new data from useSelector will re-render
+
+so whenever that state changes the components are re-rendered 
+
+hmm but now that we have the color , it does not re render because it is not using the increment or decrement action 
+
+so we will not get a rerender on every single component on the application 
+
+_____________________________________________________
+Redux Dev tools
+_____________________________________________________
+
+on larger applications working on state in bigger apps, the store helps us get a better view of the application over all
+
+to use we need to add a line when we create a store in the index.js 
+
+ const store = createStore(
+   reducer, /* preloadedState, */
++  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+ );
+
+ so pretty cool but we can see all of the actions as they are happening in the dev tools
+
+ we can see the type, the payloads etc 
+
+ we can see our state as well 
+
+ we can see the state inbetween certain actions 
+
+ you can also see the difference of when an action was fired 
+
+ when there is other differences we would see them displayed there too 
+
+ 
