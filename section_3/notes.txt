@@ -1,0 +1,650 @@
+React Redux Patterns Intro
+________________________________________________
+
+we are continuing to talk about react and redux 
+
+Goals:
+1. Avoid unnecessary rerendering with useSelector 
+2. Include action types to avoid duplication
+3. Include action creators to reduce code 
+4. Include React-router with redux 
+
+we are going to make a simple app with react and we are going to build it from scratch 
+
+useSelector Revisted 
+
+________________________________________________
+Building Numbers app
+________________________________________________
+
+we are going to set up the store and reducer 
+
+we are going to build the lucky nums app 
+
+two components 
+
+Math facts 
+
+and a different component which is a couple of inputs where we can chagne the number adn then  change the difference in the store 
+
+we can discuss optimizing our code 
+
+we are going to  start with the reducer 
+
+we are going to need to put in an action to fire off the dispatcher so we can change the num 1 or the num2 
+
+we will assume that it has type CHANGE_NUM, the num we are changing, and the value we are changing to.
+
+switch(action.type) {
+        case "CHANGE_NUM":
+            return {...state, [action.num]:action.value}
+
+and we build something like this and rememeber that we want to get the action.num and set it so we have to use the computed value to access it 
+
+our action needs to look like this below:
+
+{
+    type:"CHANGE_NUM",
+    num:"num2",
+    value:5
+}
+
+we need to put in our default as well 
+
+now we need to set up redux in our index 
+
+import {createStore} from 'redux';
+import rootReducer from './reducers/rootReducer'
+import Provider from 'react-redux'
+const store = createStore(rootReducer)
+
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider>
+    <App />
+    </Provider>
+    
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+so we set that up and now we need to define a component 
+
+
+one component will display the num 1 and num 2 which will be read from the store 
+
+then we will have a second component which is the form/inputs 
+
+so lets make our first component 
+import React from 'react';
+import {useSelector} from 'react-redux';
+
+
+const Math = () => {
+    return (
+        <div>
+            <ul>
+                <li>Sum: </li>
+                <li>Difference: </li>
+                <li>Product: </li>
+                <li>Quotient: </li>
+            </ul>
+        </div>
+    )
+}
+
+export default Math;
+
+and we want to access num 1 and num 2 which we will need to actually calculate the sum  and the difference etc
+
+so to get those values we are going to use useSelector hook from react redux 
+
+
+so we call useSelector()
+and we are going to have to pass in a callback which is passed the state of our store and then we need to figure out what we want back 
+
+so right now we want num 1 and num 2 so we want to ask for an object back 
+if we are using implicit return we need to wrap the object in parens
+
+    useSelector(state => (
+        {
+            num1:state.num1,
+            num2:state.num2
+        }
+    ))
+
+and here we can set num1 and num2 to whatever variable name we want but num1 and 2 are fine 
+
+so we are asking redux to grab trhese values from the state
+
+and we can destructure to set the variables
+
+    const {num1,num2} = useSelector(state => (
+        {
+            num1:state.num1,
+            num2:state.num2
+        }
+    ))
+
+and we can always start with just displaying the 2 numbers in some h3s 
+
+so now thats all we have to do for this component 
+
+import React from 'react';
+import {useSelector} from 'react-redux';
+
+
+const Math = () => {
+    const {num1,num2} = useSelector(state => (
+        {
+            num1:state.num1,
+            num2:state.num2
+        }
+    ))
+    return (
+        <div>
+            <h3>Math Facts</h3>
+            <ul>
+                <li>Sum: {num1 + num2}</li>
+                <li>Difference: {num1 - num2}</li>
+                <li>Product: {num1 * num2}</li>
+                <li>Quotient: {num1 / num2}</li>
+            </ul>
+        </div>
+    )
+}
+
+export default Math;
+
+it is just reading from the store, its not dispatching any actions 
+
+in the next video we will write the form components to dispatch actions and update num 1 and num 2
+
+
+________________________________________________
+numbers app part 2
+________________________________________________
+
+so because we are using redux we dont have to pass anything down 
+
+so lets make our form which is going to have a basic structure 
+
+import React from 'react';
+
+const NumberInputs = () => {
+    return(
+        <div>
+            <label htmlFor="num1">First Number</label>
+            <input id="num1" type="number" />
+            <button>Update</button>
+
+            <label htmlFor="num2">Secpnd Number</label>
+            <input id="num2" type="number" />
+            <button>Update</button>
+        </div>
+    )
+}
+
+export default NumberInputs;
+
+we can change the inputs at will and only update once we select that button 
+
+when we are typing , it will not update the state everytime it changes although we could
+
+so we are going to have local state for our form that is not in the store 
+some local state just for the values in our inputs
+
+so we are going to want to stay in sync with our redux store values 
+instead of just hard coding 0
+
+so right now react is controlling the state so we are unable to update the form fields so we need to add in our onChange 
+
+we are going to want a function for that so we are going to add in a handle change function 
+
+and jkust like we have seen before it goes like this 
+
+   const handleChange = (e) => {
+        const {value,name} = e.target;
+        setInputs(inputs => ({...inputs,[name]:value}))
+    }
+
+    we take that event object and destructure the value and name from that target 
+    then we update the inputs using a callback so we get back an object that has the previous inputs as well as the current value that we are setting 
+
+now we want to update the state of the store when we click the button 
+
+we want to click update
+take the input value
+and update num1/num2 to be whatever number is in there 
+
+we went ahead and put in a useDispatch 
+
+and we want to send off an action that looks like this 
+
+{
+    type:"CHANGE_NUM",
+    num:"num2",
+    value:5
+}
+
+we have a num as a key and the value 
+
+we are going to see a strategy for writing actions and dispatching them 
+
+we can add in a function for onClick 
+maybe something called changeNum that will update our redux store 
+
+    const changeNum = () => {
+        dispatch({
+            type:"CHANGE_NUM",
+            num:"num2",
+            value:5
+        }
+        )
+    }
+
+something like this but we dont want to hard code it so we are going to want to accept some arguments 
+
+so that when we call it onClick then we pass in num1 or num2
+
+like this 
+<button onClick={()=> changeNum('num1')}>Update</button>
+
+and our updated changeNum function looks like this 
+
+    const changeNum = (num) => {
+        dispatch({
+            type:"CHANGE_NUM",
+            num,
+            value: inputs[num]
+        }
+        )
+    }
+
+so when we click one of the buttons, we pass in which num we are changing 
+
+but there is a little issue
+
+we are getting the value back as a string because we are getting it from an input 
+
+anytime that we have some information coming out of a form it comes as a 
+string 
+
+we can coerce the integer easily by adding a plus sign in front of it 
+
+    const handleChange = (e) => {
+        const {value,name} = e.target;
+        setInputs(inputs => ({...inputs,[name]:+value}))
+    }
+
+so thats our updated handle change and now we get back integers instead of a string 
+
+now we have to remember that we are still hard coding in the value of our initial input state so even if we had something like 10 and 10 then we would still see zero because we had hard coded it 
+
+so what we should do is get the useSelector to grab the state of our store by importing it into our inputs file and then we can grab those valuyes and use them as the initial state value for our inputs 
+
+const {num1,num2} = useSelector(state=> ({num1:state.num1,num2:state.num2}))
+
+we are destructuring that out of our useSelector hook when we grab the state values from our store 
+
+so now in our use State hook we just update to include that 
+
+const [inputs,setInputs] = useState({num1,num2});
+
+next we will talk about making it so we dont have additional rerenders that we dont want 
+
+________________________________________________
+Preventing useSelector rerenders
+________________________________________________
+
+now that we have our basic app set up  we can discuss rerenders from happening if we dont want themj to
+
+we are using useSelectors in a few places 
+
+it is problematic that we are getting back an object because we get a rerender 
+
+console.log("MATH COMPONENT RENDERING")
+
+and we can see that even if we keep the nums the same , we are rerendering 
+nothing has changed but we know its rerendering because it is console.loggin
+
+we dont want to rerender unnecessarily when we are not actually updating a value 
+
+the reason for this is that useSelector docs say they use a strict === typing 
+
+useSelector is always going to think that something is changing because we are technically getting back a brand new object each time 
+
+there are a couple of ways to minimize this 
+
+we can use useSelector multiple times 
+
+so we can rewrite our Math component 
+
+so this part where we use useSelector
+
+    const {num1,num2} = useSelector(state => (
+        {
+            num1:state.num1,
+            num2:state.num2
+        }
+    ))
+
+gets split up in two 
+const num1 = useSelector(state=>state.num1);
+const num2 = useSelector(state=>state.num2);
+
+since we are not getting an object back and useSelector is using the triple equals equality check we can see that we are just comparing primitives to primitives so it can check if anything has actually changed 
+
+so now if we dont change the numbers and we push update, we are not getting a rerender anymore because it knows that nothing has changed since the last update 
+
+so thats one solution 
+
+the other option is a little different 
+
+we can pass in a second argument to useSelector and that would be an equality function 
+
+we can define our own function but we can import one called shallow equal from react-redux and it will check object values against each other and we can try that too 
+
+
+    const {num1,num2} = useSelector(state => ({
+        num1:state.num1,
+        num2:state.num2
+    }),shallowEqual)
+
+we imported in shallow equal from react-redux library
+
+import {useSelector,shallowEqual} from 'react-redux';
+
+so just for this purpose we have a shallow equal 
+we dont want to compare the objects we are comparing the comparisons 
+
+we also have the same issue with our input NUmbers component 
+
+const {num1,num2} = useSelector(state=> ({num1:state.num1,num2:state.num2}))
+
+the problem is not that the data is not changing, it is being updated just that the value is not changing 
+we can add in a shallowEqual to be consistent 
+
+so that is some more about useSelector ,
+we have a couple of options 
+we can seperate stuff into individual primitives but if we wanted to get a more complicated object or array that needs to be an object or array then we can use the shallow equals instead
+
+________________________________________________
+Action Types 
+________________________________________________
+
+Common Redux Patterns 
+
+this might seem super simple but what is really common to do 
+
+move the value of the type property 
+type:"CHANGE_NUM"
+
+this thing 
+the string in this case "CHANGE_NUM"
+
+it is common to move those to a constant 
+in a seperate file 
+
+export const INCREMENT = "INCREMENT"
+
+for example 
+
+why would we do this?
+
+1. Better for tab completion in the editor 
+it helps to keep the naming consistent because all actions types are gathered in a single place 
+
+sometimes you want to see all the action types 
+
+list of action types that were added removed and changed in a pull request helps everyone onthe team keep track of scope and implementation of new features 
+
+if you make a typo when you are working with a variable , you would get an error right away 
+
+if it was a string you wouldnt get an error 
+
+so we can just make our own file names action type js 
+
+export const CHANGE_NUM = "CHANGE_NUM";
+
+we export this 
+
+and wherever we are using that action type we go ahead and add that in 
+
+so very visibly the string can be a problem in case there was a typo 
+
+we added in the counter from the previous lesson 
+
+now we have additional action types that we are watching out for 
+
+so now it is extra important that we include state and then add in the different count because we have other things relying on that state 
+
+really common pattern to see people follow 
+
+we can see all of the different actions that can happen in our store and a lot easier to identify errors 
+
+________________________________________________
+Action creators
+________________________________________________
+
+Abstract the functions that create actions to their own file 
+a function that creates an action is an action creator 
+
+the idea is that we want to move the logic of that function into an actions file so that we just have to execute the function that gives us the object with the type we want to dispatch 
+
+we are justy moving the creation of that object into its own function 
+
+lets start with these 
+
+    const increment = () => dispatch({type:INCREMENT})
+    const decrement = () => dispatch({type:DECREMENT})
+
+we would take this out of here and create a new action creator function and export it 
+
+so we end up with something like this in our actions.js file 
+
+import {INCREMENT,DECREMENT} from './actionTypes'
+
+
+export const increment = () => ({type:INCREMENT})
+export const decrement = () => ({type:DECREMENT})
+
+so we update our counter js 
+
+import React from 'react';
+import {useSelector,useDispatch} from 'react-redux';
+import {increment,decrement} from './actions'
+const Counter = () => {
+    const dispatch = useDispatch();
+    const count = useSelector(state => state.count);
+    const up = () => dispatch(increment())
+    const down = () => dispatch(decrement())
+    return(
+        <div>
+            <h1>Count is: {count}</h1>
+            <button onClick={down}> - </button>
+            <button onClick={up}> + </button>
+            
+        </div>
+    )
+}
+export default Counter;
+
+ so we also have a dispatch action in our number inputs 
+ where we are dispatching the type for num1 and num2 
+
+ so we want to abstract the logic out of here 
+
+         dispatch({
+            type:CHANGE_NUM,
+            num,
+            value: inputs[num]
+        }
+        )
+
+so if we wanted to make an action creater for this we would need to create one that takes arguments because the dispatch is dynamic here it has arguments that change 
+
+so we would make a function something like change 
+
+export const change = (num,value) => ({
+    type:CHANGE_NUM,
+    num,
+    value
+})
+
+
+    const changeNum = (num) => {
+        dispatch(change(num,inputs[num]))
+    }
+
+    so we end up just passing in variable into our dispatch for our function 
+
+    just another abstraction of the action objects 
+
+    for simple apps we could just put stuff in a single file 
+
+    it make things a little easier when we start working with async functions 
+
+
+________________________________________________
+Combine Reducers 
+________________________________________________
+
+writing multiple reducing functions instead of 1 large one 
+
+if we had a full application with lots of pieces of state in the store 
+
+what is easier lots of the time in larger codebases and applications 
+
+we can split them up and use a redux method calls combine reducers 
+
+we can write reducers that only have to worry about one piece of state 
+
+so lets practice by splitting up an application into different reducers and then using combine reducer 
+
+a common naming pattern is to make it keep track of the piece of state its trying to track 
+
+so in our new count.js in the reducers folder 
+and remember that reducers have state as the first param and then action as the second 
+
+export default count(state, action){
+
+}
+
+so the whole idea is that this reducer is going to worry about a single piece of state which is count 
+dont need to worry about the other pieces of state 
+
+const INITIAL_STATE = 0;
+
+export default function count(state = INITIAL_STATE, action){
+    switch(action.type) {
+        case 'INCREMENT':
+            return state + 1
+        case 'DECREMENT':
+            return state - 1
+        case 'RESET':
+            return 0
+        default:
+            return state;
+
+}
+
+and we end up with this which is a lot shorter than our rootReducer as it currently stands 
+
+const INITIAL_STATE = {num1:0,num2:0,count:0}
+
+function rootReducer(state=INITIAL_STATE,action){
+    switch(action.type) {
+        case "CHANGE_NUM":
+            return {...state, [action.num]:action.value}
+        case 'INCREMENT':
+            return {...state, count:state.count + 1}
+        case 'DECREMENT':
+            return {...state, count:state.count - 1}
+        case 'RESET':
+            return {...state,count:0}
+        default:
+            return state;
+    }
+}
+export default rootReducer;
+
+and that is it for our count reducer
+
+next we can make a second reducer for finding our num1 and num2 
+
+so we will still need to use an object for that state 
+
+lets make nums 
+
+const INITIAL_STATE = {num1:0,num2:0}
+
+export default functions nums(state = INITIAL_STATE,action){
+    switch(action.type) {
+        case "CHANGE_NUM":
+            return {...state, [action.num]:action.value}
+
+        default:
+            return state;
+    }
+}
+
+we end up with this and since it is returning an object we dont want to mutate and we want to keep it pure so we are still keeping the spread operator and returning that number and value 
+
+so now our root reducer is going to change 
+
+we call 
+
+combineReducers 
+
+and we pass in an object 
+
+the state key : and the reducer for that state 
+
+so we update our root reducer and start off importing in the outside reducers 
+
+import {combineReducers} from 'redux';
+import countReducer from './count';
+import numsReducer from './nums';
+
+combineReducers({count:countReducer, nums:numsReducer})
+
+
+
+and then  we combine the reducers using that method from redux not react-redux 
+
+so the counter works but the number facts one does not because 
+
+it is creating a new property called nums with num1 and num2 
+so thats what is in the state 
+
+so combineReducers is combining these under an object if we remember which is hy we need to add in nums where appropriate to make the component work once more 
+
+    const {num1,num2} = useSelector(state => ({
+        num1:state.nums.num1,
+        num2:state.nums.num2
+    }),shallowEqual)
+
+so this was from our Math component and now if we go to the NumberInputs component we can update there too 
+
+    const {num1,num2} = useSelector(state => ({
+        num1:state.nums.num1,
+        num2:state.nums.num2
+    }),shallowEqual)
+
+and that is from our NumberInputs 
+
+and so now our reducers are in seperate files 
+and that just allows us to write one reducer for one piece of state 
+
+we dont have to do this though and in this situation it is extra work 
+
+but in larger applications it can be useful 
+
+and we could make our rootReducer a bit shorter with some shortcut syntax 
+
+import nums from './nums';
+import count from './count';
+
+const rootReducer = combineReducers({count, nums})
+
