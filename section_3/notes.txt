@@ -648,3 +648,25 @@ import count from './count';
 
 const rootReducer = combineReducers({count, nums})
 
+and that is combining reducers 
+
+________________________________________________
+React Router Redux 
+________________________________________________
+
+how do we integrate react router and redux 
+
+react router gives us the BrowserRouter component 
+
+react-redux gives us the provider 
+wrap the provider on the outside and the router on the inside 
+
+    <Provider store={store}>
+        <BrowserRouter>
+            <App />
+        <BrowserRouter/>
+    </Provider>
+
+    more redux about async stuff after the next exercise 
+
+    
